@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 )
+
 type router struct {
 	handlers map[string]HandlerFunc
 }
@@ -20,7 +21,6 @@ func (r *router) addRoute(method string, pattern string, handler HandlerFunc) {
 
 func (r *router) handle(c *Context) {
 	key := c.Method + "-" + c.Path
-	
 	if handler, ok := r.handlers[key]; ok {
 		handler(c)
 	} else {

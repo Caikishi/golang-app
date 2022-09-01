@@ -11,7 +11,7 @@ type Engine struct {
 }
 
 // New is the constructor of gee.Engine
-func New() *Engine {
+func NewService() *Engine {
 	return &Engine{router: newRouter()}
 }
 
@@ -38,4 +38,3 @@ func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	c := newContext(w, req)
 	engine.router.handle(c)
 }
-
