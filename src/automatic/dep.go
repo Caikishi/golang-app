@@ -1,9 +1,9 @@
 package automatic
 
 import (
+	"bytes"
 	"example/src/gee"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 )
@@ -16,28 +16,31 @@ func BuildReact(ctx *gee.Context) {
 	fmt.Println("验证通过,开始拉取代码")
 	url := "/Users/caikishi/Documents/CODE/my-react-app/"
 	pullGit(url)
-	fmt.Println("start build")
 	yarnBuild(url)
 }
 
 func pullGit(url string) {
 	cmd := exec.Command("git", "pull")
 	cmd.Dir = url
+	var stderr bytes.Buffer
 	cmd.Stdout = os.Stdout
+	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {
-		log.Fatalf("failed to call cmd.Run(): %v", err)
+		fmt.Printf("err.Error(): %v\n", err.Error())
+		fmt.Printf("stderr.String(): %v\n", stderr.String())
 	}
-
 }
 
 func yarnBuild(url string, a ...string) {
 	cmd := exec.Command("yarn", "build")
 	cmd.Dir = url
-	fmt.Println()
+	var stderr bytes.Buffer
 	cmd.Stdout = os.Stdout
+	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {
-		log.Fatalf("failed to call cmd.Run(): %v", err)
+		fmt.Printf("err.Error(): %v\n", err.Error())
+		fmt.Printf("stderr.String(): %v\n", stderr.String())
 	}
 }

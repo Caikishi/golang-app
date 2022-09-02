@@ -99,9 +99,16 @@ func main() {
 	// ex(worker)
 
 	// //
+	// fmt.Printf("geeconfig.GetConf(): %v\n", geeconfig.GetConf())
+
 	service := gee.NewService()
-	service.POST("/updateReact", func(ctx *gee.Context) {
-		automatic.BuildReact(ctx)
+
+	service.POST("/pushReact", func(ctx *gee.Context) {
+		go automatic.BuildReact(ctx)
+	})
+
+	service.POST("/pushBs", func(ctx *gee.Context) {
+		go automatic.BuildReact(ctx)
 	})
 	service.Run(":9999")
 }
