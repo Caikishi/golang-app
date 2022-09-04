@@ -114,12 +114,25 @@ func mvnPackage(url string) {
 func javaRun(url string) {
 	cmd := exec.Command("java", "-jar", "demo-0.0.1-SNAPSHOT.jar")
 	cmd.Dir = url
-	var stderr bytes.Buffer
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = &stderr
-	err := cmd.Start()
+	// var stderr bytes.Buffer
+	// cmd.Stdout = os.Stdout
+	// cmd.Stderr = &stderr
+	stdout, err := cmd.StdoutPipe()
+	if err = cmd.Start(); err != nil {
+		return
+	}
+	// err := cmd.Start()
 	javaCount++
 	errorFlag := true
+	go func() {
+		v := <-flag
+		if v {
+			//设置自行触发的结束不会进入 error
+			errorFlag = false
+			cmd.Process.Kill()
+			javaCount = 0
+		}
+	}()
 	go func() {
 		cmd.Process.Wait()
 		if errorFlag {
@@ -134,13 +147,13 @@ func javaRun(url string) {
 			errorFlag = true
 		}
 	}()
-
-	v := <-flag
-	if v {
-		//设置自行触发的结束不会进入 error
-		errorFlag = false
-		cmd.Process.Kill()
-		javaCount = 0
+	for {
+		tmp := make([]byte, 1024)
+		_, err := stdout.Read(tmp)
+		fmt.Print(string(tmp))
+		if err != nil {
+			break
+		}
 	}
 
 }
