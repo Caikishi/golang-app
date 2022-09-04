@@ -5,6 +5,7 @@ import (
 	"example/src/gee"
 	"example/src/geeconfig"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 )
@@ -41,9 +42,9 @@ func BuildJava(ctx *gee.Context) {
 	if javaCount > 0 {
 		flag <- true
 	}
-	pullGit(config.JavaRul)
+	// pullGit(config.JavaRul)
 	fmt.Println("开始打包代码")
-	mvnPackage(config.JavaRul)
+	// mvnPackage(config.JavaRul)
 	fmt.Println("开始打包代码")
 	javaRun(config.JavaRul)
 
@@ -118,12 +119,26 @@ func javaRun(url string) {
 	cmd.Stderr = &stderr
 	err := cmd.Start()
 	javaCount++
-	if err != nil {
-		fmt.Printf("err.Error(): %v\n", err.Error())
-		fmt.Printf("stderr.String(): %v\n", stderr.String())
-	}
+	errorFlag := true
+	go func() {
+		cmd.Process.Wait()
+		if errorFlag {
+			if err != nil {
+				log.Fatalf("failed to call cmd.Start(): %v", err)
+			}
+			//TODO
+			//后续可能将错误记录直接记录到 redis
+			//kill 进程也会触发
+			log.Printf("exitcode: %d", cmd.ProcessState.ExitCode())
+		} else {
+			errorFlag = true
+		}
+	}()
+
 	v := <-flag
 	if v {
+		//设置自行触发的结束不会进入 error
+		errorFlag = false
 		cmd.Process.Kill()
 		javaCount = 0
 	}
