@@ -116,7 +116,7 @@ func main() {
 	})
 
 	service.POST("/pushBs", func(ctx *gee.Context) {
-		go automatic.BuildReact(ctx)
+		go automatic.BuildJava(ctx)
 	})
 	service.Run(":9999")
 }
