@@ -8,10 +8,9 @@ import (
 )
 
 type conf struct {
-	Host   string `yaml: "host"`
-	User   string `yaml:"user"`
-	Pwd    string `yaml:"pwd"`
-	Dbname string `yaml:"dbname"`
+	ReactUrl string `yaml:"reactUrl"`
+	JavaRul  string `yaml:"javaUrl"`
+	Password string `yaml:"password"`
 }
 
 func init() {
@@ -22,7 +21,7 @@ func init() {
 // 并转换成conf对象
 func GetConf() *conf {
 	//应该是 绝对地址
-	yamlFile, err := ioutil.ReadFile("./config.yaml")
+	yamlFile, err := ioutil.ReadFile("config.yaml")
 	if err != nil {
 		fmt.Println(err.Error())
 	}

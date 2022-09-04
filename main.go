@@ -69,6 +69,14 @@ func test(args ...any) { // 可以接受任意个string参数
 }
 
 func main() {
+	// r, _ := git.PlainClone("/tmp/foo", false, &git.CloneOptions{
+	// 	URL:      "https://github.com/go-git/go-git",
+	// 	Progress: os.Stdout,
+	// })
+	// fmt.Printf("r: %v\n", r)
+	// w, _ := r.Worktree()
+
+	// w.Pull(&git.PullOptions{RemoteName: "origin"})
 	// var arr = []string{
 	//     "ele1",
 	//     "ele2",

@@ -1,4 +1,4 @@
-host: localhost:3306
-user: root
-pwd: 123456
-dbname: test
+# reactUrl: /usr/local/git/feixun-bs-web
+reactUrl: /Users/caikishi/Documents/CODE/my-react-app/
+javaUrl: /usr/local/git/feixun-bs-web
+password: feixun@123
