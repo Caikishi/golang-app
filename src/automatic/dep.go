@@ -42,9 +42,9 @@ func BuildJava(ctx *gee.Context) {
 	if javaCount > 0 {
 		flag <- true
 	}
-	// pullGit(config.JavaRul)
+	pullGit(config.JavaRul)
 	fmt.Println("开始打包代码")
-	// mvnPackage(config.JavaRul)
+	mvnPackage(config.JavaRul)
 	fmt.Println("开始打包代码")
 	javaRun(config.JavaRul)
 
