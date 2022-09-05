@@ -69,6 +69,14 @@ func test(args ...any) { // 可以接受任意个string参数
 }
 
 func main() {
+	//定时任务更新梯子配置
+	// trojan.GetYaml()
+	// for _, m := range trojan.GetConf().Proxies {
+	// 	if strings.Contains(m["name"].(string), "日本") && m["type"] == "ss" {
+	// 		fmt.Printf("服务名: %v,密码:%v,端口:%v,类型:%v,服务地址:%v\n", m["name"], m["password"], m["port"], m["type"], m["server"])
+	// 	}
+	// }
+
 	// r, _ := git.PlainClone("/tmp/foo", false, &git.CloneOptions{
 	// 	URL:      "https://github.com/go-git/go-git",
 	// 	Progress: os.Stdout,

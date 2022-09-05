@@ -150,7 +150,7 @@ func javaRun(url string) {
 	for {
 		tmp := make([]byte, 1024)
 		_, err := stdout.Read(tmp)
-		fmt.Print(string(tmp))
+		log.Print(string(tmp))
 		if err != nil {
 			break
 		}
