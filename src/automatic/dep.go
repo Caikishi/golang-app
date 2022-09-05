@@ -29,7 +29,6 @@ func BuildReact(ctx *gee.Context) {
 		return
 	}
 	reactCount++
-	fmt.Println("验证通过,开始拉取代码 feixun-bs-web")
 	pullGit(config.ReactUrl)
 	yarn(config.ReactUrl)
 	yarnBuild(config.ReactUrl)
@@ -39,21 +38,17 @@ func BuildJava(ctx *gee.Context) {
 	if !verification(ctx) {
 		return
 	}
-	fmt.Println("验证通过,开始拉取代码 java")
 	if javaCount > 0 {
 		flag <- true
 	}
 	pullGit(config.JavaRul)
-	fmt.Println("开始打包代码")
 	mvnPackage(config.JavaRul)
-	fmt.Println("开始启动spring boot")
 	javaRun(config.JavaRul)
 
 }
 
 func verification(ctx *gee.Context) bool {
 	fmt.Printf("config: %v\n", config)
-	fmt.Println("React push 开始验证密码")
 	token := ctx.Req.Header["X-Gitee-Token"]
 	if len(token) == 0 || token[0] != config.Password {
 		fmt.Println("密码验证不通过")
