@@ -49,6 +49,9 @@ func BuildJava(ctx *gee.Context) {
 
 func verification(ctx *gee.Context) bool {
 	fmt.Printf("config: %v\n", config)
+	if ctx == nil {
+		return true
+	}
 	token := ctx.Req.Header["X-Gitee-Token"]
 	if len(token) == 0 || token[0] != config.Password {
 		fmt.Println("密码验证不通过")
@@ -129,9 +132,8 @@ func javaRun(url string) {
 		os.Mkdir(dir, 0777)
 	}
 
-	cmd := exec.Command("java", "-jar", "feixun-web.jar")
+	cmd := exec.Command("java", "-jar", "bs-web.jar")
 	cmd.Dir = url + "feixun-web/target"
-	fmt.Printf("cmd.Dir: %v\n", cmd.Dir)
 	stdout, err := cmd.StdoutPipe()
 	if err = cmd.Start(); err != nil {
 		return
@@ -159,16 +161,28 @@ func javaRun(url string) {
 			errorFlag = true
 		}
 	}()
-	time := time.Now().Format(dir+"/2006-01-02 15-04-05") + ".log"
-	f, err := os.Create(time)
-	if err != nil {
-		fmt.Println(err.Error())
+	time := time.Now().Format(dir+"/2006-01-02") + ".log"
+	var ff *os.File
+	if !isExist(time) {
+		f, _ := os.Create(time)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		ff = f
+	} else {
+		f, _ := os.OpenFile(time, os.O_CREATE|os.O_RDWR|os.O_APPEND, os.ModeAppend|os.ModePerm)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		ff = f
 	}
-	defer f.Close()
+	defer ff.Close()
+
 	for {
 		tmp := make([]byte, 1024)
 		_, err := stdout.Read(tmp)
-		f.Write([]byte(string(tmp)))
+		ff.Write([]byte(string(tmp)))
+		// ioutil.WriteFile(time, []byte(string(tmp)), 0777)
 		fmt.Print(string(tmp))
 		if err != nil {
 			break
