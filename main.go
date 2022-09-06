@@ -1,10 +1,10 @@
 package main
 
 import (
-	"example/src/automatic"
-	"example/src/gee"
+	"example/src/trojan"
 	"fmt"
 	"log"
+	"strings"
 )
 
 type Person interface {
@@ -71,11 +71,23 @@ func test(args ...any) { // 可以接受任意个string参数
 func main() {
 	//定时任务更新梯子配置
 	// trojan.GetYaml()
-	// for _, m := range trojan.GetConf().Proxies {
-	// 	if strings.Contains(m["name"].(string), "日本") && m["type"] == "ss" {
-	// 		fmt.Printf("服务名: %v,密码:%v,端口:%v,类型:%v,服务地址:%v\n", m["name"], m["password"], m["port"], m["type"], m["server"])
-	// 	}
-	// }
+	// var identifier []trojan.MyServers
+	slice1 := make([]trojan.MyServers, 10)
+
+	for _, m := range trojan.GetConf().Proxies {
+		if strings.Contains(m["name"].(string), "日本") && m["type"] == "ss" {
+			// fmt.Printf("服务名: %v,密码:%v,端口:%v,类型:%v,服务地址:%v\n", m["name"], m["password"], m["port"], m["type"], m["server"])
+			slice1 = append(slice1, trojan.MyServers{
+				Address:  m["server"].(string),
+				Port:     m["port"].(int),
+				Method:   m["type"].(string),
+				Password: m["password"].(string),
+			})
+
+		}
+	}
+	// fmt.Printf("slice1: %v\n", slice1)
+	trojan.GetJson(slice1)
 
 	// r, _ := git.PlainClone("/tmp/foo", false, &git.CloneOptions{
 	// 	URL:      "https://github.com/go-git/go-git",
@@ -117,14 +129,14 @@ func main() {
 	// //
 	// fmt.Printf("geeconfig.GetConf(): %v\n", geeconfig.GetConf())
 
-	service := gee.NewService()
+	// service := gee.NewService()
 
-	service.POST("/pushReact", func(ctx *gee.Context) {
-		go automatic.BuildReact(ctx)
-	})
+	// service.POST("/pushReact", func(ctx *gee.Context) {
+	// 	go automatic.BuildReact(ctx)
+	// })
 
-	service.POST("/pushBs", func(ctx *gee.Context) {
-		go automatic.BuildJava(ctx)
-	})
-	service.Run(":9999")
+	// service.POST("/pushBs", func(ctx *gee.Context) {
+	// 	go automatic.BuildJava(ctx)
+	// })
+	// service.Run(":9999")
 }
