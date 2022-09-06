@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"time"
 )
 
 var config = geeconfig.GetConf()
@@ -28,7 +29,6 @@ func BuildReact(ctx *gee.Context) {
 		return
 	}
 	reactCount++
-	fmt.Println("验证通过,开始拉取代码 feixun-bs-web")
 	pullGit(config.ReactUrl)
 	yarn(config.ReactUrl)
 	yarnBuild(config.ReactUrl)
@@ -38,21 +38,17 @@ func BuildJava(ctx *gee.Context) {
 	if !verification(ctx) {
 		return
 	}
-	fmt.Println("验证通过,开始拉取代码 java")
 	if javaCount > 0 {
 		flag <- true
 	}
 	pullGit(config.JavaRul)
-	fmt.Println("开始打包代码")
 	mvnPackage(config.JavaRul)
-	fmt.Println("开始打包代码")
 	javaRun(config.JavaRul)
 
 }
 
 func verification(ctx *gee.Context) bool {
 	fmt.Printf("config: %v\n", config)
-	fmt.Println("React push 开始验证密码")
 	token := ctx.Req.Header["X-Gitee-Token"]
 	if len(token) == 0 || token[0] != config.Password {
 		fmt.Println("密码验证不通过")
@@ -98,6 +94,22 @@ func yarnBuild(url string) {
 	}
 }
 
+// 判断文件或文件夹是否存在
+func isExist(path string) bool {
+	_, err := os.Stat(path)
+	if err != nil {
+		if os.IsExist(err) {
+			return true
+		}
+		if os.IsNotExist(err) {
+			return false
+		}
+		fmt.Println(err)
+		return false
+	}
+	return true
+}
+
 func mvnPackage(url string) {
 	cmd := exec.Command("mvn", "package")
 	cmd.Dir = url
@@ -112,16 +124,18 @@ func mvnPackage(url string) {
 }
 
 func javaRun(url string) {
-	cmd := exec.Command("java", "-jar", "demo-0.0.1-SNAPSHOT.jar")
-	cmd.Dir = url
-	// var stderr bytes.Buffer
-	// cmd.Stdout = os.Stdout
-	// cmd.Stderr = &stderr
+	dir := "javaLogs"
+	if !isExist(dir) {
+		os.Mkdir(dir, 0777)
+	}
+
+	cmd := exec.Command("java", "-jar", "feixun-web.jar")
+	cmd.Dir = url + "feixun-web/target"
+	fmt.Printf("cmd.Dir: %v\n", cmd.Dir)
 	stdout, err := cmd.StdoutPipe()
 	if err = cmd.Start(); err != nil {
 		return
 	}
-	// err := cmd.Start()
 	javaCount++
 	errorFlag := true
 	go func() {
@@ -139,18 +153,23 @@ func javaRun(url string) {
 			if err != nil {
 				log.Fatalf("failed to call cmd.Start(): %v", err)
 			}
-			//TODO
-			//后续可能将错误记录直接记录到 redis
-			//kill 进程也会触发
+			//后续可能将错误记录直接记录到 文件 或 数据库
 			log.Printf("exitcode: %d", cmd.ProcessState.ExitCode())
 		} else {
 			errorFlag = true
 		}
 	}()
+	time := time.Now().Format(dir+"/2006-01-02 15-04-05") + ".log"
+	f, err := os.Create(time)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	defer f.Close()
 	for {
 		tmp := make([]byte, 1024)
 		_, err := stdout.Read(tmp)
-		log.Print(string(tmp))
+		f.Write([]byte(string(tmp)))
+		fmt.Print(string(tmp))
 		if err != nil {
 			break
 		}
