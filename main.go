@@ -75,6 +75,7 @@ func init() {
 }
 
 func main() {
+	fmt.Println("测试 1")
 	//定时任务更新梯子配置
 	// trojan.GetYaml()
 	// var identifier []trojan.MyServers
