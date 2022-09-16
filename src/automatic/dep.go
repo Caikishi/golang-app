@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -29,9 +30,11 @@ func BuildReact(ctx *gee.Context) {
 		return
 	}
 	reactCount++
-	pullGit(config.ReactUrl)
-	yarn(config.ReactUrl)
-	yarnBuild(config.ReactUrl)
+	b := pullGit(config.ReactUrl)
+	if b {
+		yarn(config.ReactUrl)
+		yarnBuild(config.ReactUrl)
+	}
 }
 
 func BuildJava(ctx *gee.Context) {
@@ -48,7 +51,6 @@ func BuildJava(ctx *gee.Context) {
 }
 
 func verification(ctx *gee.Context) bool {
-	fmt.Printf("config: %v\n", config)
 	if ctx == nil {
 		return true
 	}
@@ -60,17 +62,34 @@ func verification(ctx *gee.Context) bool {
 	return true
 }
 
-func pullGit(url string) {
+func pullGit(url string) bool {
+	log.Println("开始更新")
 	cmd := exec.Command("git", "pull")
 	cmd.Dir = url
-	var stderr bytes.Buffer
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
+
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Printf("err.Error(): %v\n", err.Error())
-		fmt.Printf("stderr.String(): %v\n", stderr.String())
+		fmt.Printf("combined out:\n%s\n", string(out))
+		log.Fatalf("cmd.Run() failed with %s\n", err)
 	}
+	msg := string(out)
+	if strings.Contains(msg, "Already up to date") {
+		log.Println("没有新内容,不执行后续操作")
+		return false
+	} else {
+		log.Println(msg)
+	}
+	return true
+
+	// fmt.Printf("cmd 结果:\n%s\n", string(out))
+	// var stderr bytes.Buffer
+	// cmd.Stdout = os.Stdout
+	// cmd.Stderr = &stderr
+	// err := cmd.Run()
+	// if err != nil {
+	// 	fmt.Printf("err.Error(): %v\n", err.Error())
+	// 	fmt.Printf("stderr.String(): %v\n", stderr.String())
+	// }
 }
 func yarn(url string) {
 	cmd := exec.Command("yarn")
@@ -182,8 +201,8 @@ func javaRun(url string) {
 		tmp := make([]byte, 1024)
 		_, err := stdout.Read(tmp)
 		ff.Write([]byte(string(tmp)))
-		// ioutil.WriteFile(time, []byte(string(tmp)), 0777)
-		fmt.Print(string(tmp))
+		// 主程序不再打印 java 日志
+		// fmt.Print(string(tmp))
 		if err != nil {
 			break
 		}
