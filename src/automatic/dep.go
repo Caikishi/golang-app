@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -29,9 +30,11 @@ func BuildReact(ctx *gee.Context) {
 		return
 	}
 	reactCount++
-	pullGit(config.ReactUrl)
-	yarn(config.ReactUrl)
-	yarnBuild(config.ReactUrl)
+	b := pullGit(config.ReactUrl)
+	if b {
+		yarn(config.ReactUrl)
+		yarnBuild(config.ReactUrl)
+	}
 }
 
 func BuildJava(ctx *gee.Context) {
@@ -48,7 +51,9 @@ func BuildJava(ctx *gee.Context) {
 }
 
 func verification(ctx *gee.Context) bool {
-	fmt.Printf("config: %v\n", config)
+	if ctx == nil {
+		return true
+	}
 	token := ctx.Req.Header["X-Gitee-Token"]
 	if len(token) == 0 || token[0] != config.Password {
 		fmt.Println("密码验证不通过")
@@ -57,17 +62,34 @@ func verification(ctx *gee.Context) bool {
 	return true
 }
 
-func pullGit(url string) {
+func pullGit(url string) bool {
+	log.Println("开始更新")
 	cmd := exec.Command("git", "pull")
 	cmd.Dir = url
-	var stderr bytes.Buffer
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
+
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Printf("err.Error(): %v\n", err.Error())
-		fmt.Printf("stderr.String(): %v\n", stderr.String())
+		fmt.Printf("combined out:\n%s\n", string(out))
+		log.Fatalf("cmd.Run() failed with %s\n", err)
 	}
+	msg := string(out)
+	if strings.Contains(msg, "Already up to date") {
+		log.Println("没有新内容,不执行后续操作")
+		return false
+	} else {
+		log.Println(msg)
+	}
+	return true
+
+	// fmt.Printf("cmd 结果:\n%s\n", string(out))
+	// var stderr bytes.Buffer
+	// cmd.Stdout = os.Stdout
+	// cmd.Stderr = &stderr
+	// err := cmd.Run()
+	// if err != nil {
+	// 	fmt.Printf("err.Error(): %v\n", err.Error())
+	// 	fmt.Printf("stderr.String(): %v\n", stderr.String())
+	// }
 }
 func yarn(url string) {
 	cmd := exec.Command("yarn")
@@ -129,9 +151,8 @@ func javaRun(url string) {
 		os.Mkdir(dir, 0777)
 	}
 
-	cmd := exec.Command("java", "-jar", "feixun-web.jar")
+	cmd := exec.Command("java", "-jar", "bs-web.jar")
 	cmd.Dir = url + "feixun-web/target"
-	fmt.Printf("cmd.Dir: %v\n", cmd.Dir)
 	stdout, err := cmd.StdoutPipe()
 	if err = cmd.Start(); err != nil {
 		return
@@ -159,17 +180,29 @@ func javaRun(url string) {
 			errorFlag = true
 		}
 	}()
-	time := time.Now().Format(dir+"/2006-01-02 15-04-05") + ".log"
-	f, err := os.Create(time)
-	if err != nil {
-		fmt.Println(err.Error())
+	time := time.Now().Format(dir+"/2006-01-02") + ".log"
+	var ff *os.File
+	if !isExist(time) {
+		f, _ := os.Create(time)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		ff = f
+	} else {
+		f, _ := os.OpenFile(time, os.O_CREATE|os.O_RDWR|os.O_APPEND, os.ModeAppend|os.ModePerm)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		ff = f
 	}
-	defer f.Close()
+	defer ff.Close()
+
 	for {
 		tmp := make([]byte, 1024)
 		_, err := stdout.Read(tmp)
-		f.Write([]byte(string(tmp)))
-		fmt.Print(string(tmp))
+		ff.Write([]byte(string(tmp)))
+		// 主程序不再打印 java 日志
+		// fmt.Print(string(tmp))
 		if err != nil {
 			break
 		}
