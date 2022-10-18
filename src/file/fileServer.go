@@ -41,9 +41,10 @@ func FsnotifyWatch() {
 				}
 				//是否等于创建文件
 				if event.Op.String() == "CREATE" {
-					WebSocketHandler.BroadcastUsers(1, event.Name)
+
 					// log.Printf("%s %s\n", event.Name, event.Op)
 				}
+				WebSocketHandler.BroadcastUsers(1, event.Name)
 				log.Printf("%s %s\n", event.Name, event.Op)
 			case err, ok := <-watcher.Errors:
 				if !ok {

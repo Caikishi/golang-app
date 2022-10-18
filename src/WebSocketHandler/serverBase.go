@@ -11,16 +11,17 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/shirou/gopsutil/process"
 )
 
 const (
 	// 允许等待的写入时间
-	writeWait = 10 * time.Second
+	writeWait = 100 * time.Second
 
-	// Time allowed to read the next pong message from the peer.
-	pongWait = 60 * time.Second
+	// 允许从对等方读取下一个pong消息的时间。
+	pongWait = 600 * time.Second
 
-	// Send pings to peer with this period. Must be less than pongWait.
+	// 将ping发送到此时间段的对等方。必须小于pongWait。
 	pingPeriod = (pongWait * 9) / 10
 
 	// Maximum message size allowed from peer.
@@ -116,9 +117,14 @@ func wsHandler(resp http.ResponseWriter, req *http.Request) {
 	// 写协程
 	go wsConn.wsWriteLoop()
 
+	pNames := ProcessName(int32(os.Getpid()))
+	var pName string
+	for _, v := range pNames {
+		pName = v
+	}
 	for i := range fileInfoList {
 		//去除文件夹
-		if !fileInfoList[i].IsDir() && fileInfoList[i].Name() != "file.exe" {
+		if !fileInfoList[i].IsDir() && fileInfoList[i].Name() != pName {
 			// fmt.Printf("文件名：%v,文件修改时间:%v,文件mode%v\n", fileInfoList[i].Name(), fileInfoList[i].ModTime(), addrs) //打印当前文件或目录下的文件或目录名
 			go BroadcastUsers(1, fileInfoList[i].Name())
 			return
@@ -128,6 +134,22 @@ func wsHandler(resp http.ResponseWriter, req *http.Request) {
 
 }
 
+/*
+获取所有进程名，以数组返回
+*/
+
+func ProcessName(s int32) (pname []string) {
+	pids, _ := process.Pids()
+	for _, pid := range pids {
+		if s == pid {
+			pn, _ := process.NewProcess(pid)
+			pName, _ := pn.Name()
+			return append(pname, pName)
+		}
+	}
+	return pname
+}
+
 // 处理队列中的消息
 func (wsConn *wsConnection) processLoop() {
 	// 处理消息队列中的消息
@@ -135,7 +157,7 @@ func (wsConn *wsConnection) processLoop() {
 	for {
 		msg, err := wsConn.wsRead()
 		if err != nil {
-			log.Println("获取消息出现错误", err.Error())
+			// log.Println("获取消息出现错误", err.Error())
 			break
 		}
 		log.Println("接收到消息", string(msg.data), msg.messageType)
@@ -153,26 +175,26 @@ func (wsConn *wsConnection) wsReadLoop() {
 	// 设置消息的最大长度
 	wsConn.wsSocket.SetReadLimit(maxMessageSize)
 	wsConn.wsSocket.SetReadDeadline(time.Now().Add(pongWait))
-	// for {
-	// 	// 读一个message
-	// 	msgType, data, err := wsConn.wsSocket.ReadMessage()
-	// 	if err != nil {
-	// 		websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure)
-	// 		log.Println("消息读取出现错误", err.Error())
-	// 		wsConn.close()
-	// 		return
-	// 	}
-	// 	req := &wsMessage{
-	// 		msgType,
-	// 		data,
-	// 	}
-	// 	// 放入请求队列,消息入栈
-	// 	select {
-	// 	case wsConn.inChan <- req:
-	// 	case <-wsConn.closeChan:
-	// 		return
-	// 	}
-	// }
+	for {
+		// 读一个message
+		msgType, data, err := wsConn.wsSocket.ReadMessage()
+		if err != nil {
+			websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure)
+			log.Println("消息读取出现错误", err.Error())
+			wsConn.close()
+			return
+		}
+		req := &wsMessage{
+			msgType,
+			data,
+		}
+		// 放入请求队列,消息入栈
+		select {
+		case wsConn.inChan <- req:
+		case <-wsConn.closeChan:
+			return
+		}
+	}
 }
 
 // 发送消息给客户端
@@ -187,7 +209,7 @@ func (wsConn *wsConnection) wsWriteLoop() {
 		case msg := <-wsConn.outChan:
 			// 写给websocket
 			if err := wsConn.wsSocket.WriteMessage(msg.messageType, msg.data); err != nil {
-				log.Println("发送消息给客户端发生错误", err.Error())
+				// log.Println("发送消息给客户端发生错误", err.Error())
 				// 切断服务
 				wsConn.close()
 				return
@@ -245,6 +267,13 @@ func (wsConn *wsConnection) close() {
 func BroadcastUsers(messageType int, data string) {
 	for _, ws := range wsConnAll {
 		ws.wsWrite(messageType, []byte(data))
+	}
+}
+
+// 对所有用户进行广播
+func BroadcastUsers2(messageType int, data []byte) {
+	for _, ws := range wsConnAll {
+		ws.wsWrite(messageType, data)
 	}
 }
 
