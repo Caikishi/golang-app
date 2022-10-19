@@ -2,7 +2,6 @@ package file
 
 import (
 	"example/src/WebSocketHandler"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -13,9 +12,7 @@ import (
 func FileServer() {
 	str, _ := os.Getwd()
 	file := http.FileServer(http.Dir(str))
-	fmt.Printf("当前目录：%v\n", file)
 	http.Handle("/", http.StripPrefix("/", file))
-	fmt.Printf("http://127.0.0.1:8181\n")
 	err := http.ListenAndServe(":8181", nil)
 	if err != nil {
 		log.Println(err)
@@ -39,11 +36,10 @@ func FsnotifyWatch() {
 				if !ok {
 					return
 				}
-				//是否等于创建文件
-				if event.Op.String() == "CREATE" {
+				// if event.Op.String() == "CREATE" {
 
-					// log.Printf("%s %s\n", event.Name, event.Op)
-				}
+				// 	// log.Printf("%s %s\n", event.Name, event.Op)
+				// }
 				WebSocketHandler.BroadcastUsers(1, event.Name)
 				log.Printf("%s %s\n", event.Name, event.Op)
 			case err, ok := <-watcher.Errors:
@@ -54,7 +50,6 @@ func FsnotifyWatch() {
 			}
 		}
 	}()
-	//监听目录
 	err = watcher.Add("./")
 	if err != nil {
 		log.Fatal("Add failed:", err)

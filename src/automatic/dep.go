@@ -2,6 +2,7 @@ package automatic
 
 import (
 	"bytes"
+	"example/src/WebSocketHandler"
 	"example/src/gee"
 	"example/src/geeconfig"
 	"fmt"
@@ -75,7 +76,7 @@ func pullGit(url string) bool {
 	msg := string(out)
 	if strings.Contains(msg, "Already up to date") {
 		log.Println("没有新内容,不执行后续操作")
-		return false
+		// return false
 	} else {
 		log.Println(msg)
 	}
@@ -103,17 +104,47 @@ func yarn(url string) {
 		fmt.Printf("stderr.String(): %v\n", stderr.String())
 	}
 }
-func yarnBuild(url string) {
+func yarnBuild(url string) error {
 	cmd := exec.Command("yarn", "build")
 	cmd.Dir = url
-	var stderr bytes.Buffer
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
+	stdout, err := cmd.StdoutPipe()
+	cmd.Stderr = cmd.Stdout
 	if err != nil {
-		fmt.Printf("err.Error(): %v\n", err.Error())
-		fmt.Printf("stderr.String(): %v\n", stderr.String())
+		return err
 	}
+	if err = cmd.Start(); err != nil {
+		return err
+	}
+
+	// dir := "ReactLogs"
+	// if !isExist(dir) {
+	// 	os.Mkdir(dir, 0777)
+	// }
+
+	for {
+		tmp := make([]byte, 1024)
+		_, err := stdout.Read(tmp)
+		fmt.Println(string(tmp))
+		trimStr := string(tmp)
+		// ff.Write(tmp)
+		WebSocketHandler.BroadcastUsers(1, trimStr)
+		// fmt.Print(string(tmp))
+		if err != nil {
+			break
+		}
+	}
+	if err = cmd.Wait(); err != nil {
+		return err
+	}
+	// var stderr bytes.Buffer
+	// cmd.Stdout = os.Stdout
+	// cmd.Stderr = &stderr
+	// err := cmd.Run()
+	// if err != nil {
+	// 	fmt.Printf("err.Error(): %v\n", err.Error())
+	// 	fmt.Printf("stderr.String(): %v\n", stderr.String())
+	// }
+	return nil
 }
 
 // 判断文件或文件夹是否存在
