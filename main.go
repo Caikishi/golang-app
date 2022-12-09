@@ -2,7 +2,6 @@ package main
 
 import (
 	"example/src/WebSocketHandler"
-	"example/src/automatic"
 	"example/src/file"
 	"example/src/gee"
 	"net/http"
@@ -98,9 +97,6 @@ var upgrader = websocket.Upgrader{
 
 func main() {
 	r := gee.NewService()
-	r.GET("/", func(c *gee.Context) {
-		c.HTML(http.StatusOK, "<h1>Hello Gee</h1>")
-	})
 	r.GET("/hello", func(c *gee.Context) {
 		// expect /hello?name=geektutu
 		c.HTML(http.StatusOK, "<!DOCTYPE html><html><head><meta  charset='UTF-8' /><title>菜鸟教程(runoob.com)</title><script src='https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js'></script><style>html,body{height:100%;margin:0;background-color: #000;color: #fff;padding:0}#sse{height:100%}#iframe{position:absolute;width:100%;height:100%;top:0;left:0}</style><script type='text/javascript'>var host='http://192.168.62.98:8181/';var change=function(data){document.getElementById('iframe').src=host+data};function strToByte(str){var bytes=new Array();var len,c;len=str.length;for(var i=0;i<len;i++){c=str.charCodeAt(i);if(c>=0x010000&&c<=0x10ffff){bytes.push(((c>>18)&0x07)|0xf0);bytes.push(((c>>12)&0x3f)|0x80);bytes.push(((c>>6)&0x3f)|0x80);bytes.push((c&0x3f)|0x80)}else if(c>=0x000800&&c<=0x00ffff){bytes.push(((c>>12)&0x0f)|0xe0);bytes.push(((c>>6)&0x3f)|0x80);bytes.push((c&0x3f)|0x80)}else if(c>=0x000080&&c<=0x0007ff){bytes.push(((c>>6)&0x1f)|0xc0);bytes.push((c&0x3f)|0x80)}else{bytes.push(c&0xff)}}return bytes}function WebSocketTest(){if('WebSocket'in window){var ws=new WebSocket('ws://192.168.62.98:8080/ws');ws.onopen=function(){ws.send('testing')};ws.onmessage=(evt)=>{let receivedMsg=evt.data;console.log('接收数据：'+receivedMsg);let d=document.getElementById('test');d.innerHTML=d.innerHTML+`<div>${receivedMsg}</div>`};ws.onclose=function(){console.log('连接已关闭...')}}else{console.log('您的浏览器不支持 WebSocket!')}}WebSocketTest();</script></head><body><div id='test'></div><div id='sse'><!--<span>最新文件:<span id='t'></span></span>--><!--<div style='height: 100%'><iframe id='iframe'src=''frameborder='0'height='100%'width='100%'seamless></iframe></div>--><!--<a href='javascript:WebSocketTest()'>运行WebSocket</a>--></div></body></html>")
@@ -109,18 +105,18 @@ func main() {
 	})
 	go r.Run(":9998")
 	go file.FsnotifyWatch()
-	go WebSocketHandler.StartWebsocket("0.0.0.0:8080")
-	open("http://127.0.0.1:9998/hello")
+	go WebSocketHandler.StartWebsocket("0.0.0.0:8899")
+	// open("http://127.0.0.1:9998/hello")
 	service := gee.NewService()
 
-	service.POST("/pushReact", func(ctx *gee.Context) {
-		go automatic.BuildReact(ctx)
-	})
+	// service.POST("/pushReact", func(ctx *gee.Context) {
+	// 	go automatic.BuildReact(ctx)
+	// })
 
 	// service.POST("/pushBs", func(ctx *gee.Context) {
 	// 	go automatic.BuildJava(ctx)
 	// })
 	go service.Run(":9999")
 	file.FileServer()
-
+	// proxy.Start()
 }

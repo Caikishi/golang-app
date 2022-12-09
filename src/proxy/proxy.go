@@ -18,7 +18,7 @@ func proxy2(w http.ResponseWriter, r *http.Request) {
 }
 
 func proxy(w http.ResponseWriter, r *http.Request) {
-	u, _ := url.Parse("http://172.16.26.61:666")
+	u, _ := url.Parse("http://113.103.197.225:8081")
 	proxy := httputil.NewSingleHostReverseProxy(u)
 	proxy.ServeHTTP(w, r)
 }

@@ -85,7 +85,7 @@ func wsHandler(resp http.ResponseWriter, req *http.Request) {
 
 	pwd, _ := os.Getwd()
 	//获取文件或目录相关信息
-	fileInfoList, err := ioutil.ReadDir(pwd)
+	fileInfoList, err := ioutil.ReadDir(pwd + "/video")
 	if err != nil {
 		log.Fatal(err)
 	}
